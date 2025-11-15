@@ -21,3 +21,9 @@ def create_request(destination: str, db: Session = Depends(get_db)):
         "request_id": ride.id,
         "status": ride.status
     }
+
+
+@router.get('/check')
+def check_status(id: int, db: Session = Depends(get_db)):
+    status = db.get(RideRequest, id)
+    return status.status

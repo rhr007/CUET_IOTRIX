@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 
 from db import get_db
 from models import User
-from schemas import UserBase
+from schemas import UserBase, LoginBase
 from auth import hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -23,13 +23,14 @@ def signup(userInfo: UserBase, db: Session = Depends(get_db)):
     return {"message": "Signup complete, waiting for admin approval"}
 
 @router.post("/login")
-def login(phone: str, password: str, db: Session = Depends(get_db)):
-    user = db.exec(select(User).where(User.phone == phone)).first()
+def login(userInfo: LoginBase, db: Session = Depends(get_db)):
+    user = db.exec(select(User).where(User.phone == userInfo.phone)).first()
 
-    if not user or not verify_password(password, user.password):
+    if not user or not verify_password(userInfo.password, user.password):
         raise HTTPException(401, "Invalid credentials")
 
     if not user.is_active:
         raise HTTPException(403, "Account not approved by admin")
 
-    return {"message": "Login successful", "is_admin": user.is_admin, "user_id": user.id}
+    return {"message": "Login successful", "is_admin": user.is_admin, "user_id": user.id, 'name': user.name, 'points': user.points}
+
