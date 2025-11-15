@@ -3,11 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 
 from db import engine, get_db
-from routers import auth_routes
+from routers import auth_routes, requests, pullers
 
 
 app = FastAPI(title='CUET IOTRIX E-RICKSHAW AUTOMATION SYSTEM')
 app.include_router(auth_routes.router)
+app.include_router(requests.router)
+app.include_router(pullers.router)
 
 app.add_middleware(
     CORSMiddleware,
