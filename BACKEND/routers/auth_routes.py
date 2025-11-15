@@ -3,31 +3,28 @@ from sqlmodel import Session, select
 
 from db import get_db
 from models import User
+from schemas import UserBase
 from auth import hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/signup")
-def signup(name: str, phone: str, password: str, session: Session = Depends(get_db)):
-    existing = session.exec(select(User).where(User.phone == phone)).first()
+def signup(userInfo: UserBase, db: Session = Depends(get_db)):
+    existing = db.exec(select(User).where(User.phone == userInfo.phone)).first()
     if existing:
         raise HTTPException(400, "Phone already registered")
 
-    user = User(
-        name=name,
-        phone=phone,
-        password=hash_password(password),
-        is_admin=False,
-        is_active=False   # admin must approve
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    
+    userInfo.password = hash_password(userInfo.password)
+    new_user = User.model_validate(userInfo)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
     return {"message": "Signup complete, waiting for admin approval"}
 
 @router.post("/login")
-def login(phone: str, password: str, session: Session = Depends(get_session)):
-    user = session.exec(select(User).where(User.phone == phone)).first()
+def login(phone: str, password: str, db: Session = Depends(get_db)):
+    user = db.exec(select(User).where(User.phone == phone)).first()
 
     if not user or not verify_password(password, user.password):
         raise HTTPException(401, "Invalid credentials")
