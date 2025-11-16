@@ -115,3 +115,11 @@ def get_completed_requests(puller_id: int, db: Session = Depends(get_db)):
     return rides
 
 
+
+@router.get('/points')
+def get_points(puller_id: int, db: Session = Depends(get_db)):
+    user = db.get(User, puller_id)
+
+    return user.points
+
+
