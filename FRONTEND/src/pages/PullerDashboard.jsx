@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 export default function PullerDashboard() {
   const pullerId = localStorage.getItem("user_id");
   const pullerName = localStorage.getItem("user_name");
-  const points = localStorage.getItem("points");
+  const [points, setPoints] = useState(0);
 
   const [pending, setPending] = useState([]);
   const [accepted, setAccepted] = useState([]);
@@ -24,6 +24,11 @@ export default function PullerDashboard() {
       params: { puller_id: pullerId },
     });
     setCompleted(c.data);
+
+    const p_res = await api.get("/puller/points", {
+      params: { puller_id: pullerId },
+    });
+    setPoints(p_res.data);
   };
 
   const accept = async (reqId) => {
@@ -32,6 +37,14 @@ export default function PullerDashboard() {
     });
 
     Swal.fire(res.data.message, "", "success");
+    fetchAll();
+  };
+  const reject = async (reqId) => {
+    const res = await api.post("/puller/reject", null, {
+      params: { request_id: reqId },
+    });
+
+    Swal.fire(res.data.message, "", "error");
     fetchAll();
   };
 
@@ -88,33 +101,46 @@ export default function PullerDashboard() {
           Pending Requests
         </h2>
 
-        {pending.map((r) => (
-          <div
-            key={r.id}
-            className="p-4 bg-white rounded-lg shadow mb-3 border flex justify-between items-center"
-          >
-            <div>
-              <p>
-                <b>From:</b> CUET Campus
-              </p>
-              <p>
-                <b>Destination:</b> {r.destination}
-              </p>
-              <p>
-                <b>Time:</b> {new Date(r.request_time).toLocaleString()}
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => accept(r.id)}
-                className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-              >
-                Accept
-              </button>
-            </div>
+        {pending.length === 0 ? (
+          <div className="p-4 bg-white rounded-lg shadow border text-center text-gray-500">
+            No pending requests at the moment
           </div>
-        ))}
+        ) : (
+          pending.map((r) => (
+            <div
+              key={r.id}
+              className="p-4 bg-white rounded-lg shadow mb-3 border flex justify-between items-center"
+            >
+              <div>
+                <p>
+                  <b>From:</b> CUET Campus
+                </p>
+                <p>
+                  <b>Destination:</b> {r.destination}
+                </p>
+                <p>
+                  <b>Time:</b> {new Date(r.request_time).toLocaleString()}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => accept(r.id)}
+                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 cursor-pointer"
+                >
+                  Accept
+                </button>
+
+                <button
+                  onClick={() => reject(r.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </section>
 
       {/* Accepted */}
